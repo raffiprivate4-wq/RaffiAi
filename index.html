@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RaffiAi - Dev By @Raffioffci5</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome & Marked.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&display=swap');
+        
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* Neubrutalism Style UI */
+        .neo-card {
+            background-color: #1e293b;
+            border: 3px solid #000000;
+            box-shadow: 4px 4px 0px #000000;
+            border-radius: 16px;
+        }
+
+        .neo-btn {
+            border: 2.5px solid #000000;
+            box-shadow: 3px 3px 0px #000000;
+            font-weight: 800;
+            transition: all 0.15s ease-in-out;
+            touch-action: manipulation;
+        }
+
+        .neo-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000000;
+        }
+
+        .neo-input {
+            border: 2.5px solid #000000;
+            box-shadow: 2px 2px 0px #000000;
+            background-color: #0f172a;
+            color: #ffffff;
+        }
+
+        .neo-badge {
+            border: 2px solid #000000;
+            box-shadow: 2px 2px 0px #000000;
+        }
+
+        /* Sidebar Drawer */
+        #sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-right: 4px solid #000;
+            z-index: 50;
+        }
+
+        /* Markdown Styling inside Chat */
+        .prose pre {
+            background-color: #090d16 !important;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 12px;
+            overflow-x: auto;
+            color: #38bdf8;
+        }
+        
+        .prose table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            border: 2px solid #000;
+            box-shadow: 3px 3px 0px #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .prose th, .prose td {
+            border: 1.5px solid #475569;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .prose th {
+            background-color: #6366f1;
+            color: #ffffff;
+            font-weight: 800;
+        }
+
+        .prose td {
+            background-color: #1e293b;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.02); }
+        }
+        .thinking-glow {
+            animation: pulseGlow 1.5s infinite;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 10px;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- LOGIN & REGISTER MODAL -->
+    <div id="auth-container" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 p-4">
+        <div class="neo-card w-full max-w-md p-6 bg-slate-900 text-white relative">
+            <div class="text-center mb-6">
+                <div class="inline-block neo-badge bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-2 rounded-2xl mb-3">
+                    <h1 class="text-3xl font-black tracking-wider text-white drop-shadow">RaffiAi</h1>
+                </div>
+                <p id="auth-subtitle" class="text-sm font-semibold text-slate-300">Silakan masuk atau daftar akun baru</p>
+            </div>
+
+            <div id="auth-error" class="hidden mb-4 p-3 bg-red-500 text-white neo-badge rounded-xl font-bold text-xs text-center"></div>
+
+            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1 tracking-wider text-slate-300">Username</label>
+                    <input type="text" id="auth-username" required class="neo-input w-full px-4 py-3 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Masukkan username...">
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1 tracking-wider text-slate-300">Password</label>
+                    <input type="password" id="auth-password" required class="neo-input w-full px-4 py-3 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Masukkan password...">
+                </div>
+
+                <button type="submit" id="auth-btn" class="neo-btn w-full py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-base font-black tracking-wider uppercase mt-2">
+                    Masuk Akun
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p id="auth-toggle-text" class="text-xs font-bold text-slate-400">
+                    Belum punya akun? 
+                    <button onclick="toggleAuthMode()" class="text-indigo-400 underline font-black hover:text-indigo-300 ml-1">Daftar Sekarang</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app-container" class="hidden flex flex-col h-full overflow-hidden">
+        
+        <!-- HEADER -->
+        <header class="bg-slate-900 border-b-4 border-black px-4 py-2.5 flex items-center justify-between z-30 shadow-md shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="neo-btn p-2 bg-amber-400 hover:bg-amber-500 text-black rounded-xl flex items-center justify-center" title="Buka Riwayat">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div class="neo-badge bg-gradient-to-r from-indigo-500 to-purple-600 px-3 py-1 rounded-xl flex items-center gap-2">
+                    <i class="fa-solid fa-eye text-white text-base"></i>
+                    <span class="font-black text-base text-white tracking-wide">RaffiAi Vision</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <div class="hidden sm:flex neo-badge bg-emerald-400 text-black px-2.5 py-1 rounded-xl text-xs font-black items-center gap-1.5">
+                    <span class="w-2 h-2 bg-black rounded-full animate-ping"></span>
+                    <span>VISION READY</span>
+                </div>
+                <div class="neo-badge bg-pink-400 text-black px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1.5">
+                    <i class="fa-solid fa-user"></i>
+                    <span id="user-display">User</span>
+                </div>
+                <button onclick="logout()" class="neo-btn bg-red-500 hover:bg-red-600 text-white px-2.5 py-1 rounded-xl text-xs font-black">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>Keluar
+                </button>
+            </div>
+        </header>
+
+        <!-- SUB HEADER BANNER -->
+        <div class="px-3 py-2 bg-slate-900/80 border-b-2 border-slate-800 shrink-0">
+            <div class="max-w-5xl mx-auto neo-card bg-gradient-to-r from-slate-800 via-indigo-950 to-slate-900 p-2.5 relative overflow-hidden">
+                <div class="flex flex-wrap items-center justify-between gap-2 z-10 relative">
+                    <div>
+                        <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <span class="neo-badge bg-cyan-400 text-black px-2.5 py-0.5 rounded-lg text-[11px] font-black flex items-center gap-1">
+                                <i class="fa-regular fa-calendar-days"></i>
+                                <span id="current-date">Jumat, 2 Okt 2026</span>
+                            </span>
+                            <span class="neo-badge bg-amber-400 text-black px-2.5 py-0.5 rounded-lg text-[11px] font-black flex items-center gap-1">
+                                <i class="fa-regular fa-clock"></i>
+                                <span id="current-time">20:20:00</span>
+                            </span>
+                        </div>
+                        <h2 class="text-sm sm:text-base font-black text-white tracking-tight">
+                            RaffiAi <span class="text-indigo-400">Developer By Raffi</span>
+                        </h2>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="startNewChat()" class="neo-btn bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Chat Baru</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex flex-1 relative overflow-hidden">
+            
+            <!-- SIDEBAR -->
+            <aside id="sidebar" class="absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-slate-900 p-4 flex flex-col -translate-x-full shadow-2xl z-50 border-r-4 border-black">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b-2 border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
+                        <h3 class="font-black text-sm text-white uppercase tracking-wider">Riwayat Percakapan</h3>
+                    </div>
+                    <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white font-bold p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="mb-3">
+                    <div class="relative">
+                        <input type="text" id="search-topic-input" oninput="filterChatHistory()" placeholder="Cari topik..." class="neo-input w-full pl-8 pr-3 py-1.5 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                    </div>
+                </div>
+
+                <div id="chat-history-list" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+
+                <div class="pt-3 mt-auto border-t-2 border-slate-800">
+                    <button onclick="clearAllHistory()" class="neo-btn w-full py-2 bg-slate-800 hover:bg-slate-700 text-red-400 rounded-xl text-xs font-black flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash"></i>
+                        <span>Hapus Semua Riwayat</span>
+                    </button>
+                </div>
+            </aside>
+
+            <div id="sidebar-overlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/70 z-40 backdrop-blur-sm"></div>
+
+            <!-- CHAT DISPLAY AREA -->
+            <main class="flex-1 flex flex-col h-full bg-slate-950 px-2 sm:px-4 pt-3 pb-2 overflow-hidden relative">
+                
+                <div id="chat-messages" class="flex-1 overflow-y-auto space-y-4 px-1 sm:px-3 pb-4 max-w-5xl w-full mx-auto">
+                    <div id="chat-welcome" class="text-center py-10 px-4">
+                        <div class="inline-block neo-badge bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-4 rounded-3xl mb-4 shadow-xl">
+                            <i class="fa-solid fa-eye text-5xl text-white"></i>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white mb-2">RaffiAi Vision & Chat</h2>
+                        <p class="text-slate-400 max-w-md mx-auto text-xs sm:text-sm font-bold">
+                            Kirim gambar/foto untuk dianalisis oleh AI secara langsung, atau tanyakan apa saja!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- THINKING INDICATOR -->
+                <div id="thinking-indicator" class="hidden max-w-5xl w-full mx-auto mb-2 shrink-0">
+                    <div class="neo-card bg-indigo-950/80 p-3 flex items-center gap-3 border-indigo-500 text-indigo-300 thinking-glow">
+                        <div class="neo-badge bg-indigo-500 text-white w-7 h-7 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+                        </div>
+                        <span class="font-black text-xs text-indigo-200" id="thinking-text">RaffiAi Sedang Menganalisis Foto/Gambar...</span>
+                    </div>
+                </div>
+
+                <!-- PREVIEW ATTACHMENT -->
+                <div id="attachment-preview" class="hidden max-w-5xl w-full mx-auto mb-2 p-2 bg-slate-900 neo-badge rounded-xl flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <i id="preview-icon" class="fa-solid fa-image text-emerald-400 ml-2"></i>
+                        <span id="preview-filename" class="text-xs font-bold text-slate-200 truncate">foto.jpg</span>
+                    </div>
+                    <button onclick="removeAttachment()" class="text-red-400 hover:text-red-300 font-bold px-2 py-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- INPUT FORM -->
+                <div class="max-w-5xl w-full mx-auto pb-3 sm:pb-4 pt-1 shrink-0">
+                    <form id="chat-form" onsubmit="handleSendMessage(event)" class="neo-card bg-slate-900 p-2 flex items-center gap-1.5 sm:gap-2">
+                        
+                        <!-- Upload Foto/Gambar (Vision Enabled) -->
+                        <button type="button" onclick="document.getElementById('gallery-input').click()" class="neo-btn h-10 w-10 sm:h-11 sm:w-11 bg-purple-500 hover:bg-purple-600 text-white rounded-xl flex items-center justify-center shrink-0" title="Upload Foto/Gambar untuk Analisis">
+                            <i class="fa-solid fa-image text-sm sm:text-base"></i>
+                        </button>
+                        <input type="file" id="gallery-input" class="hidden" onchange="handleFileSelect(event)" accept="image/*">
+
+                        <!-- Upload Dokumen/Video -->
+                        <button type="button" onclick="document.getElementById('doc-input').click()" class="neo-btn h-10 w-10 sm:h-11 sm:w-11 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl flex items-center justify-center shrink-0" title="Lampirkan Dokumen/Video">
+                            <i class="fa-solid fa-paperclip text-sm sm:text-base"></i>
+                        </button>
+                        <input type="file" id="doc-input" class="hidden" onchange="handleFileSelect(event)" accept="video/*,.pdf,.doc,.docx,.txt">
+
+                        <!-- Rekam Suara -->
+                        <button type="button" id="record-btn" onclick="toggleAudioRecording()" class="neo-btn h-10 w-10 sm:h-11 sm:w-11 bg-pink-500 hover:bg-pink-600 text-white rounded-xl flex items-center justify-center shrink-0" title="Rekam Suara">
+                            <i class="fa-solid fa-microphone text-sm sm:text-base" id="mic-icon"></i>
+                        </button>
+
+                        <!-- Input Teks -->
+                        <input type="text" id="chat-input" class="neo-input h-10 sm:h-11 flex-1 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ketik pesan atau tanyakan isi foto..." autocomplete="off">
+
+                        <!-- Tombol Kirim -->
+                        <button type="submit" class="neo-btn h-10 sm:h-11 px-3 sm:px-5 bg-emerald-400 hover:bg-emerald-500 text-black rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shrink-0">
+                            <span class="hidden sm:inline">Kirim</span>
+                            <i class="fa-solid fa-paper-plane text-xs sm:text-sm"></i>
+                        </button>
+                    </form>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let usersData = JSON.parse(localStorage.getItem('raffiai_users')) || {};
+        let currentChatId = null;
+        let attachedFile = null;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            const savedUser = localStorage.getItem('raffiai_active_user');
+            if (savedUser && usersData[savedUser]) {
+                currentUser = savedUser;
+                showAppScreen();
+            } else {
+                showAuthScreen();
+            }
+        });
+
+        function updateClock() {
+            const now = new Date();
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+
+            const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+            const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
+
+            document.getElementById('current-date').innerText = dateStr;
+            document.getElementById('current-time').innerText = timeStr;
+        }
+
+        // AUTHENTICATION
+        let isSignUpMode = false;
+
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            const subtitle = document.getElementById('auth-subtitle');
+            const btn = document.getElementById('auth-btn');
+            const toggleText = document.getElementById('auth-toggle-text');
+            document.getElementById('auth-error').classList.add('hidden');
+
+            if (isSignUpMode) {
+                subtitle.innerText = 'Buat akun baru untuk menggunakan RaffiAi';
+                btn.innerText = 'Daftar Akun Baru';
+                btn.className = 'neo-btn w-full py-3.5 bg-emerald-400 hover:bg-emerald-500 text-black rounded-xl text-base font-black tracking-wider uppercase mt-2';
+                toggleText.innerHTML = 'Sudah punya akun? <button onclick="toggleAuthMode()" class="text-indigo-400 underline font-black hover:text-indigo-300 ml-1">Masuk Saja</button>';
+            } else {
+                subtitle.innerText = 'Silakan masuk atau daftar akun baru';
+                btn.innerText = 'Masuk Akun';
+                btn.className = 'neo-btn w-full py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-base font-black tracking-wider uppercase mt-2';
+                toggleText.innerHTML = 'Belum punya akun? <button onclick="toggleAuthMode()" class="text-indigo-400 underline font-black hover:text-indigo-300 ml-1">Daftar Sekarang</button>';
+            }
+        }
+
+        function handleAuth(event) {
+            event.preventDefault();
+            const usn = document.getElementById('auth-username').value.trim();
+            const pw = document.getElementById('auth-password').value.trim();
+
+            if (!usn || !pw) {
+                showAuthError('Username dan Password wajib diisi!');
+                return;
+            }
+
+            if (isSignUpMode) {
+                if (usersData[usn]) {
+                    showAuthError('Username sudah terdaftar!');
+                    return;
+                }
+                usersData[usn] = { password: pw, chats: [] };
+                localStorage.setItem('raffiai_users', JSON.stringify(usersData));
+                currentUser = usn;
+                localStorage.setItem('raffiai_active_user', currentUser);
+                showAppScreen();
+            } else {
+                if (!usersData[usn] || usersData[usn].password !== pw) {
+                    showAuthError('Username atau Password salah!');
+                    return;
+                }
+                currentUser = usn;
+                localStorage.setItem('raffiai_active_user', currentUser);
+                showAppScreen();
+            }
+        }
+
+        function showAuthError(msg) {
+            const errorDiv = document.getElementById('auth-error');
+            errorDiv.innerText = msg;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function logout() {
+            localStorage.removeItem('raffiai_active_user');
+            currentUser = null;
+            showAuthScreen();
+        }
+
+        function showAuthScreen() {
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+        }
+
+        function showAppScreen() {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('user-display').innerText = currentUser;
+            loadUserChatHistory();
+            startNewChat();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        function getUserChats() {
+            return usersData[currentUser]?.chats || [];
+        }
+
+        function saveUserChats(chats) {
+            if (usersData[currentUser]) {
+                usersData[currentUser].chats = chats;
+                localStorage.setItem('raffiai_users', JSON.stringify(usersData));
+            }
+        }
+
+        function filterChatHistory() {
+            const query = document.getElementById('search-topic-input').value.toLowerCase().trim();
+            loadUserChatHistory(query);
+        }
+
+        function loadUserChatHistory(searchQuery = '') {
+            const historyList = document.getElementById('chat-history-list');
+            historyList.innerHTML = '';
+            let chats = getUserChats();
+
+            if (searchQuery) {
+                chats = chats.filter(c => c.title.toLowerCase().includes(searchQuery));
+            }
+
+            chats.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt - a.updatedAt);
+
+            if (chats.length === 0) {
+                historyList.innerHTML = `<p class="text-xs text-slate-500 font-bold text-center py-6">Belum ada riwayat.</p>`;
+                return;
+            }
+
+            chats.forEach(chat => {
+                const isCurrent = chat.id === currentChatId;
+                const item = document.createElement('div');
+                item.className = `neo-card p-2 flex items-center justify-between gap-2 cursor-pointer transition ${isCurrent ? 'bg-indigo-900 border-indigo-400' : 'bg-slate-800 hover:bg-slate-700'}`;
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden flex-1" onclick="openChatTopic('${chat.id}')">
+                        <i class="fa-solid ${chat.pinned ? 'fa-thumbtack text-amber-400' : 'fa-message text-indigo-400'} text-xs"></i>
+                        <span class="text-xs font-bold text-white truncate">${chat.title}</span>
+                    </div>
+                    <div class="relative">
+                        <button onclick="event.stopPropagation(); deleteTopic('${chat.id}')" class="text-red-400 hover:text-red-300 p-1" title="Hapus">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                historyList.appendChild(item);
+            });
+        }
+
+        function deleteTopic(chatId) {
+            let chats = getUserChats().filter(c => c.id !== chatId);
+            saveUserChats(chats);
+            if (currentChatId === chatId) startNewChat();
+            else loadUserChatHistory();
+        }
+
+        function clearAllHistory() {
+            if (confirm('Hapus semua riwayat percakapan?')) {
+                saveUserChats([]);
+                startNewChat();
+            }
+        }
+
+        function startNewChat() {
+            currentChatId = 'chat_' + Date.now();
+            renderMessages([]);
+            loadUserChatHistory();
+        }
+
+        function openChatTopic(chatId) {
+            currentChatId = chatId;
+            const chat = getUserChats().find(c => c.id === chatId);
+            if (chat) renderMessages(chat.messages || []);
+            loadUserChatHistory();
+            toggleSidebar();
+        }
+
+        function renderMessages(messages) {
+            const chatContainer = document.getElementById('chat-messages');
+            chatContainer.innerHTML = '';
+
+            if (messages.length === 0) {
+                chatContainer.innerHTML = `
+                    <div id="chat-welcome" class="text-center py-10 px-4">
+                        <div class="inline-block neo-badge bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-4 rounded-3xl mb-4 shadow-xl">
+                            <i class="fa-solid fa-eye text-5xl text-white"></i>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white mb-2">RaffiAi Vision & Chat</h2>
+                        <p class="text-slate-400 max-w-md mx-auto text-xs sm:text-sm font-bold">
+                            Kirim gambar/foto untuk dianalisis oleh AI secara langsung, atau tanyakan apa saja!
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            messages.forEach(msg => {
+                appendMessageBubble(msg.role, msg.text, msg.attachment);
+            });
+
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function appendMessageBubble(role, text, attachment = null) {
+            const chatContainer = document.getElementById('chat-messages');
+            const welcome = document.getElementById('chat-welcome');
+            if (welcome) welcome.remove();
+
+            const isUser = role === 'user';
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `neo-card p-3 sm:p-4 max-w-[90%] sm:max-w-[80%] ${
+                isUser 
+                ? 'bg-indigo-600 text-white rounded-br-none border-indigo-950' 
+                : 'bg-slate-900 text-slate-100 rounded-bl-none border-black'
+            }`;
+
+            const header = document.createElement('div');
+            header.className = 'flex items-center gap-2 mb-1.5 pb-1 border-b border-white/10 text-xs font-black';
+            header.innerHTML = isUser 
+                ? `<i class="fa-solid fa-user text-pink-300"></i><span class="text-pink-200">${currentUser}</span>`
+                : `<i class="fa-solid fa-robot text-cyan-400"></i><span class="text-cyan-300">RaffiAi</span>`;
+            bubble.appendChild(header);
+
+            if (attachment) {
+                const attDiv = document.createElement('div');
+                attDiv.className = 'mb-2 p-2 bg-black/30 rounded-xl border border-white/10 text-xs font-bold flex flex-col items-center gap-2';
+                if (attachment.type.startsWith('image/')) {
+                    attDiv.innerHTML = `<img src="${attachment.url}" class="max-h-60 rounded-lg border border-black object-contain w-full">`;
+                } else if (attachment.type.startsWith('video/')) {
+                    attDiv.innerHTML = `<video controls src="${attachment.url}" class="max-h-52 rounded-lg border border-black w-full"></video>`;
+                } else if (attachment.type.startsWith('audio/')) {
+                    attDiv.innerHTML = `<audio controls src="${attachment.url}" class="w-full h-8"></audio>`;
+                } else {
+                    attDiv.innerHTML = `<div class="flex items-center gap-2"><i class="fa-solid fa-file text-amber-400 text-lg"></i><span>${attachment.name}</span></div>`;
+                }
+                bubble.appendChild(attDiv);
+            }
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'prose prose-invert text-xs sm:text-sm font-bold leading-relaxed break-words';
+            if (isUser) {
+                contentDiv.innerText = text;
+            } else {
+                contentDiv.innerHTML = marked.parse(text || '');
+            }
+            bubble.appendChild(contentDiv);
+
+            wrapper.appendChild(bubble);
+            chatContainer.appendChild(wrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // ATTACHMENT & FILE SELECTION
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                attachedFile = {
+                    name: file.name,
+                    type: file.type,
+                    url: e.target.result // Base64 data URL
+                };
+                showAttachmentPreview(file.name, file.type);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showAttachmentPreview(name, type) {
+            const preview = document.getElementById('attachment-preview');
+            const filenameEl = document.getElementById('preview-filename');
+            const iconEl = document.getElementById('preview-icon');
+
+            filenameEl.innerText = name;
+            if (type.startsWith('image/')) iconEl.className = 'fa-solid fa-image text-emerald-400 ml-2';
+            else if (type.startsWith('video/')) iconEl.className = 'fa-solid fa-video text-pink-400 ml-2';
+            else if (type.startsWith('audio/')) iconEl.className = 'fa-solid fa-music text-purple-400 ml-2';
+            else iconEl.className = 'fa-solid fa-file text-amber-400 ml-2';
+
+            preview.classList.remove('hidden');
+        }
+
+        function removeAttachment() {
+            attachedFile = null;
+            document.getElementById('gallery-input').value = '';
+            document.getElementById('doc-input').value = '';
+            document.getElementById('attachment-preview').classList.add('hidden');
+        }
+
+        async function toggleAudioRecording() {
+            const micIcon = document.getElementById('mic-icon');
+            const recordBtn = document.getElementById('record-btn');
+
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        attachedFile = {
+                            name: `Rekaman_Suara_${Date.now()}.mp3`,
+                            type: 'audio/mp3',
+                            url: audioUrl
+                        };
+                        showAttachmentPreview(attachedFile.name, attachedFile.type);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    micIcon.className = 'fa-solid fa-square text-white animate-pulse';
+                    recordBtn.className = 'neo-btn h-10 w-10 sm:h-11 sm:w-11 bg-red-600 hover:bg-red-700 text-white rounded-xl flex items-center justify-center shrink-0';
+                } catch (err) {
+                    alert('Gagal mengakses mikrofon: ' + err.message);
+                }
+            } else {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+                isRecording = false;
+                micIcon.className = 'fa-solid fa-microphone text-sm sm:text-base';
+                recordBtn.className = 'neo-btn h-10 w-10 sm:h-11 sm:w-11 bg-pink-500 hover:bg-pink-600 text-white rounded-xl flex items-center justify-center shrink-0';
+            }
+        }
+
+        // UPLOAD IMAGE TO FREE IMAGE HOST (TMPFILES.ORG) UNTUK INTEGRASI VISION API
+        async function uploadImageToPublicUrl(base64Data) {
+            try {
+                // Convert Base64 to Blob
+                const res = await fetch(base64Data);
+                const blob = await res.blob();
+
+                const formData = new FormData();
+                formData.append('file', blob, 'upload.jpg');
+
+                const uploadRes = await fetch('https://tmpfiles.org/api/v1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const uploadJson = await uploadRes.json();
+                if (uploadJson && uploadJson.data && uploadJson.data.url) {
+                    // ubah tmpfiles.org/XXXX menjadi tmpfiles.org/dl/XXXX agar Direct Image URL
+                    return uploadJson.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                }
+                return null;
+            } catch (err) {
+                console.error("Gagal mengupload gambar:", err);
+                return null;
+            }
+        }
+
+        // FETCH RESPONSE FROM POLLINATIONS AI (SUPPORT VISION MULTIMODAL)
+        async function fetchRaffiAiVisionResponse(promptText, imageUrl = null) {
+            let finalPrompt = promptText || "Jelaskan dan analisis gambar ini secara detail.";
+            
+            // Format URL jika membawa foto
+            let apiUrl = '';
+            if (imageUrl) {
+                const encodedPrompt = encodeURIComponent(finalPrompt);
+                const encodedImageUrl = encodeURIComponent(imageUrl);
+                apiUrl = `https://text.pollinations.ai/${encodedPrompt}?image=${encodedImageUrl}&model=openai`;
+            } else {
+                const encodedPrompt = encodeURIComponent(finalPrompt);
+                apiUrl = `https://text.pollinations.ai/${encodedPrompt}?system=Kamu+adalah+RaffiAi,+asisten+AI+pintar+yang+dapat+menganalisis+gambar,+teks,+dan+memberikan+solusi+terbaik.`;
+            }
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error("Gagal mengambil respon dari server AI.");
+            }
+            return await response.text();
+        }
+
+        // HANDLE SEND MESSAGE & VISION PROCESS
+        async function handleSendMessage(event) {
+            event.preventDefault();
+
+            const inputEl = document.getElementById('chat-input');
+            const prompt = inputEl.value.trim();
+
+            if (!prompt && !attachedFile) return;
+
+            const currentAttachment = attachedFile;
+            inputEl.value = '';
+            removeAttachment();
+
+            appendMessageBubble('user', prompt || (currentAttachment ? `Analisis foto/file ini: ${currentAttachment.name}` : ''), currentAttachment);
+
+            let chats = getUserChats();
+            let currentChat = chats.find(c => c.id === currentChatId);
+
+            if (!currentChat) {
+                const autoTitle = prompt.slice(0, 20) || (currentAttachment ? 'Analisis Gambar' : 'Percakapan AI');
+                currentChat = {
+                    id: currentChatId,
+                    title: autoTitle,
+                    messages: [],
+                    pinned: false,
+                    updatedAt: Date.now()
+                };
+                chats.push(currentChat);
+            }
+
+            currentChat.messages.push({
+                role: 'user',
+                text: prompt || (currentAttachment ? `Analisis foto/file ini: ${currentAttachment.name}` : ''),
+                attachment: currentAttachment
+            });
+            currentChat.updatedAt = Date.now();
+            saveUserChats(chats);
+            loadUserChatHistory();
+
+            // Tampilkan Loading Indicator
+            const thinkingText = document.getElementById('thinking-text');
+            const thinkingDiv = document.getElementById('thinking-indicator');
+            
+            if (currentAttachment && currentAttachment.type.startsWith('image/')) {
+                thinkingText.innerText = "Membaca & Menganalisis Isi Gambar/Foto...";
+            } else {
+                thinkingText.innerText = "RaffiAi Sedang Menjawab...";
+            }
+            thinkingDiv.classList.remove('hidden');
+
+            try {
+                let imageUrlForAi = null;
+
+                // Jika user melampirkan foto, upload dulu untuk dapat URL Publik lalu kirim ke AI Vision
+                if (currentAttachment && currentAttachment.type.startsWith('image/')) {
+                    imageUrlForAi = await uploadImageToPublicUrl(currentAttachment.url);
+                }
+
+                let aiResponseText = "";
+
+                if (currentAttachment && currentAttachment.type.startsWith('image/') && imageUrlForAi) {
+                    aiResponseText = await fetchRaffiAiVisionResponse(prompt, imageUrlForAi);
+                } else if (currentAttachment && currentAttachment.type.startsWith('video/')) {
+                    aiResponseText = `Saya melihat Anda mengunggah video **${currentAttachment.name}**. Silakan jelaskan bagian mana atau detik ke berapa dari video ini yang ingin saya jelaskan atau tanyakan!`;
+                } else {
+                    let promptWithFileCtx = prompt;
+                    if (currentAttachment) {
+                        promptWithFileCtx += `\n[Lampiran File: ${currentAttachment.name}]`;
+                    }
+                    aiResponseText = await fetchRaffiAiVisionResponse(promptWithFileCtx);
+                }
+
+                thinkingDiv.classList.add('hidden');
+                appendMessageBubble('assistant', aiResponseText);
+
+                currentChat.messages.push({
+                    role: 'assistant',
+                    text: aiResponseText
+                });
+                currentChat.updatedAt = Date.now();
+                saveUserChats(chats);
+
+            } catch (err) {
+                thinkingDiv.classList.add('hidden');
+                appendMessageBubble('assistant', "Maaf, gagal menganalisis gambar/pesan. Pastikan koneksi internet stabil dan coba kirim ulang!");
+            }
+        }
+    </script>
+</body>
+</html>
